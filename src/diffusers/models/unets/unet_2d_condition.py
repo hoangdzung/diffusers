@@ -50,6 +50,7 @@ from .unet_2d_blocks import (
     get_up_block,
 )
 
+from .fsq import FSQ
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
@@ -222,9 +223,12 @@ class UNet2DConditionModel(
         mid_block_only_cross_attention: Optional[bool] = None,
         cross_attention_norm: Optional[str] = None,
         addition_embed_type_num_heads: int = 64,
+        quantize_levels: int = 5,
     ):
         super().__init__()
 
+        self.quantize_levels = quantize_levels
+        self.fsq_layer = FSQ(quantize_levels)
         self.sample_size = sample_size
 
         if num_attention_heads is not None:
@@ -1258,6 +1262,8 @@ class UNet2DConditionModel(
         if is_controlnet:
             sample = sample + mid_block_additional_residual
 
+        sample = self.fsq_layer(sample)
+        down_block_res_samples = tuple([self.fsq(res_sample) for res_sample in down_block_res_samples])
         # 5. up
         for i, upsample_block in enumerate(self.up_blocks):
             is_final_block = i == len(self.up_blocks) - 1
