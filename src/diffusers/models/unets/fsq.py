@@ -22,7 +22,7 @@ class FSQ(nn.Module):
         self._levels_np = np.ones(z.shape[-1]) * self._levels
         half_l = torch.tensor((self._levels_np - 1) * (1 - self._eps) / 2, device=device)
         offset = torch.where(torch.tensor(np.mod(self._levels_np, 2) == 1, device=device), torch.tensor(0.0, device=device), torch.tensor(0.5, device=device))
-        shift = torch.tan(offset / half_l)
+        shift = torch.tan(offset / half_l).to(device)
         return torch.tanh(z + shift) * half_l - offset
 
     def quantize(self, z: torch.Tensor) -> torch.Tensor:
@@ -34,4 +34,5 @@ class FSQ(nn.Module):
         return quantized / half_width
 
     def forward(self, x):
-        return self.quantize(x)
+        return self.quantize(x).to(dtype=x.dtype)
+

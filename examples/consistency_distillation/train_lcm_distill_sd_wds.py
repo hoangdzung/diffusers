@@ -800,6 +800,11 @@ def parse_args():
             " more information see https://huggingface.co/docs/accelerate/v0.17.0/en/package_reference/accelerator#accelerate.Accelerator"
         ),
     )
+    # ----------Quantization Arguments----------
+    parser.add_argument(
+        "--fsq_bin",
+        type=int,
+    )
 
     args = parser.parse_args()
     env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
@@ -942,14 +947,14 @@ def main(args):
     # load teacher_unet weights into unet
     unet.load_state_dict(teacher_unet.state_dict(), strict=False)
     unet.train()
-
+    unet.set_bin_quantization(args.fsq_bin)
     # 8. Create target student U-Net. This will be updated via EMA updates (polyak averaging).
     # Initialize from (online) unet
     target_unet = UNet2DConditionModel.from_config(unet.config)
     target_unet.load_state_dict(unet.state_dict())
     target_unet.train()
     target_unet.requires_grad_(False)
-
+    target_unet.set_bin_quantization(args.fsq_bin)
     # Check that all trainable models are in full precision
     low_precision_error_string = (
         " Please make sure to always have all model weights in full float32 precision when starting training - even if"

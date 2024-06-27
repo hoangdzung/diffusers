@@ -1,5 +1,5 @@
 export MODEL_NAME="runwayml/stable-diffusion-v1-5"
-export OUTPUT_DIR="./out"
+export OUTPUT_DIR="./out_no_skip"
 
 accelerate launch train_lcm_distill_sd_wds.py \
     --pretrained_teacher_model=$MODEL_NAME \
